@@ -18,6 +18,8 @@ from sqlmodel import Session, select
 from app.core.graph_client import GraphClient
 from app.db.session import get_session
 from app.models.license import SubscribedSku
+from app.models.user import UserAssignedLicense
+from app.schemas import LicenseOperationRequest, LicenseOperationResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/licenses", tags=["Licenses"])
@@ -90,3 +92,63 @@ def get_sku(sku_id: str, session: Session = Depends(get_session)) -> SubscribedS
     if not sku:
         raise HTTPException(status_code=404, detail=f"SKU '{sku_id}' not found.")
     return sku
+
+
+# ── Write ─────────────────────────────────────────────────────────────────────
+@router.post("/assign", response_model=LicenseOperationResponse)
+async def assign_license(req: LicenseOperationRequest, session: Session = Depends(get_session)):
+    client = GraphClient()
+
+    try:
+        await client.assign_license(req.user_id, req.sku_id)
+
+        existing_user = session.exec(
+            select(UserAssignedLicense).where(
+                UserAssignedLicense.user_id == req.user_id,
+                UserAssignedLicense.sku_id == req.sku_id
+            )
+        ).first()
+
+        if not existing_user:
+            session.add(UserAssignedLicense(user_id=req.user_id, sku_id=req.sku_id))
+            session.commit()
+
+        return LicenseOperationResponse(
+            success = True,
+            message = f"License {req.sku_id} assigned to {req.user_id}",
+            user_id = req.user_id,
+            sku_id = req.sku_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, details=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, details=f"Unexpected error: {e}")
+    
+@router.post("/revoke", response_model=LicenseOperationResponse)
+async def revoke_license(req: LicenseOperationRequest, session: Session = Depends(get_session)):
+    client = GraphClient()
+
+    try:
+        await client.revoke_license(req.user_id, req.sku_id)
+
+        assignment = session.exec(
+            select(UserAssignedLicense).where(
+                UserAssignedLicense.user_id == req.user_id,
+                UserAssignedLicense.sku_id == req.sku_id
+            )
+        ).first()
+
+        if assignment:
+            session.delete(assignment)
+            session.commit()
+
+        return LicenseOperationResponse(
+            success = True,
+            message = f"License {req.sku_id} revoked from {req.user_id}",
+            user_id = req.user_id,
+            sku_id = req.sku_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, details=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, details=f"Unexpected error: {e}")

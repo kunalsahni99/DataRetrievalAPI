@@ -3,4 +3,5 @@ uvicorn[standard]
 sqlmodel
 msal
 httpx
+pydantic
 pydantic-settings

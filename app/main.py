@@ -4,8 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.db.session import create_db_and_tables
-from app.routers import licenses, sync
-from app.routers import users
+from app.routers import licenses, sync, users
 
 logging.basicConfig(
     level=logging.INFO,

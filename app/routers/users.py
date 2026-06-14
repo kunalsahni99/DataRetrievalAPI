@@ -131,7 +131,7 @@ def list_users_with_licenses(
     This is the primary read endpoint for the Segmentation Agent.
 
     Optional filters let the pipeline or a human narrow the dataset before
-    passing it downstream (e.g. only enabled accounts, or a specific department).
+    passing it downstream (e.g. only enabled accounts).
     """
     # Build user query with optional filters
     query = select(User)
@@ -185,6 +185,17 @@ def list_users(
 @router.get("/{user_id}", response_model=User, summary="Get a single user by Azure AD object ID")
 def get_user(user_id: str, session: Session = Depends(get_session)) -> User:
     user = session.get(User, user_id)
+
     if not user:
         raise HTTPException(status_code=404, detail=f"User '{user_id}' not found.")
+    return user
+
+@router.get("/upn/{user_principal_name}", response_model=User, summary="Get a single user by UPN")
+def get_user_by_upn(user_principal_name: str, session: Session = Depends(get_session)) -> User:
+    user = session.exec(
+        select(User).where(User.user_principal_name == user_principal_name)
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User '{user_principal_name}' not found.")
     return user

@@ -120,3 +120,48 @@ class GraphClient:
             page += 1
 
         return results
+    
+    async def assign_license(self, user_id: str, sku_id:str) -> dict:
+        """Assigns a M365 license to a user"""
+
+        token = self._acquire_token()
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self._settings.GRAPH_BASE_URL}/users/{user_id}/assignLicense",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "addLicenses": [{"disabledPlans": [], "skuId": sku_id}],
+                    "removeLicenses": []
+                },
+                timeout=300
+            )
+
+            if response.status_code != 200:
+                error = response.json().get("error", {}).get("message", response.text)
+                raise ValueError(f"License assignment failed: {error}")
+            
+            return response.json()
+        
+
+    async def revoke_license(self, user_id: str, sku_id:str) -> dict:
+        """Revokes a M365 license to a user"""
+
+        token = self._acquire_token()
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self._settings.GRAPH_BASE_URL}/users/{user_id}/assignLicense",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "addLicenses": [],
+                    "removeLicenses": [sku_id]
+                },
+                timeout=300
+            )
+
+            if response.status_code != 200:
+                error = response.json().get("error", {}).get("message", response.text)
+                raise ValueError(f"License assignment failed: {error}")
+            
+            return response.json()
