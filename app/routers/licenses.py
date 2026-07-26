@@ -120,9 +120,9 @@ async def assign_license(req: LicenseOperationRequest, session: Session = Depend
             sku_id = req.sku_id
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, details=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, details=f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
     
 @router.post("/revoke", response_model=LicenseOperationResponse)
 async def revoke_license(req: LicenseOperationRequest, session: Session = Depends(get_session)):
@@ -149,6 +149,6 @@ async def revoke_license(req: LicenseOperationRequest, session: Session = Depend
             sku_id = req.sku_id
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, details=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, details=f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")

@@ -162,6 +162,6 @@ class GraphClient:
 
             if response.status_code != 200:
                 error = response.json().get("error", {}).get("message", response.text)
-                raise ValueError(f"License assignment failed: {error}")
+                raise ValueError(f"License revocation failed: {error}")
             
             return response.json()

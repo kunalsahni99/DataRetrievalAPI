@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.db.session import create_db_and_tables
-from app.routers import licenses, sync, users
+from app.routers import licenses, sync, users, auth
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +31,7 @@ app = FastAPI(
 app.include_router(sync.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(licenses.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
 
 @app.get("/health", tags=["Health"])
 def health_check():
